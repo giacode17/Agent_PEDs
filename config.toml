@@ -1,0 +1,16 @@
+[cli.options]
+  stream = true
+  payload_path = ""
+
+[deployment.online.parameters]
+  model_id = "ibm/granite-3-3-8b-instruct"  # underlying model of WatsonxChat
+  url = "https://us-south.ml.cloud.ibm.com"  
+
+[deployment.software_specification]
+  name = ""
+  base_sw_spec = "runtime-24.1-py3.11"
+
+[mlflow]
+enabled = false           # set true when ready
+tracking_uri = "http://your-mlflow-server:5000"
+experiment_name = "pediatric_post_discharge_agent"
