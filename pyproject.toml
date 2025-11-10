@@ -1,23 +1,22 @@
-[ped]
+[tool.poetry]
 name = "peds_post_discharge_agent"
 version = "0.1.0"
 description = "Pediatric post-discharge assistant using LangGraph + watsonx.ai."
-authors = ["Jiah Sun <jihyun.sun@icloud.com>"]
-license = "MIT"
 readme = "README.md"
+
+
 packages = [
-    { include = "langgraph_react_agent_base", from = "src" }
+  { include = "peds_post_discharge_agent", from = "src" }
 ]
 
-[dependencies]
-python = "^3.11.13"
-langchain-ibm = "^1.0.0"
-langchain=="^1.0.5"
-langchain-community=="^0.4.1"
-ibm-watsonx-ai = "^1.4.5"
-pytest = "^8.3.3"
+[tool.poetry.dependencies]
+python = ">=3.11,<3.12"
+langchain-ibm = "1.0.0"
+langchain = "1.0.5"
+langchain-community = "0.4.1"
+ibm-watsonx-ai = "1.4.5"
+pytest = "8.3.3"
 
 [build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
-
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
