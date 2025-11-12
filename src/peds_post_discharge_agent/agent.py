@@ -3,15 +3,22 @@ from ibm_watsonx_ai import APIClient
 from langchain_ibm import ChatWatsonx
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from langgraph.checkpoint.memory import MemorySaver
+import mlflow
+from datetime import datetime
+
 from .tools import pediatric_system_prompt, SymptomInput, evaluate_risk
 
-# Try to import create_agent; if unavailable, fall back to create_react_agent
+
+ #Try to import create_agent; if unavailable, fall back to create_react_agent
 try:
     from langchain.agents import create_agent
     USE_CREATE_AGENT = True
+    print("model success")
 except ImportError:
     from langgraph.prebuilt import create_react_agent
     USE_CREATE_AGENT = False
+
+
 
 
 class PediatricAgentService:
@@ -25,6 +32,7 @@ class PediatricAgentService:
         self.service_url = "https://us-south.ml.cloud.ibm.com"
         self.space_id = self.params.get("space_id")
         self.model_id = "ibm/granite-3-3-8b-instruct"
+        self.mlflow_enabled = self.params.get("mlflow_enabled", False)
 
         # Inner client uses token from runtime context
         credentials = {
@@ -37,6 +45,14 @@ class PediatricAgentService:
 
         self._llm = self._create_chat_model()
         self._memory = MemorySaver()
+
+        if self.mlflow_enabled:
+            tracking_uri = self.params.get("mlflow_tracking_uri", "file:./mlruns")
+            experiment_name = self.params.get("mlflow_experiment_name", "peds_post_discharge_agent")
+
+            mlflow.set_tracking_uri(tracking_uri)
+            mlflow.set_experiment(experiment_name)
+
 
     def _create_chat_model(self) -> ChatWatsonx:
         params = {
@@ -104,6 +120,7 @@ class PediatricAgentService:
         return agent
 
     # -------- Non-streaming --------
+
     def generate(self, context):
         import time
         payload = context.get_json()
@@ -111,6 +128,7 @@ class PediatricAgentService:
 
         start = time.time()
 
+        # 1) Build agent graph & invoke
         agent = self._build_agent_graph(messages)
         state_input = {"messages": self._convert_messages(messages)}
 
@@ -125,7 +143,38 @@ class PediatricAgentService:
         elapsed_ms = int((time.time() - start) * 1000)
 
         # Optional: plug MLflow here later (using elapsed_ms, etc.)
+        user_msg = ""
+        for m in reversed(messages):
+            if m.get("role") == "user":
+                user_msg = m.get("content", "")
+                break
 
+        # 3) Very simple flags for demo (you can refine later)
+        text_lower = (generated_text or "").lower()
+        medication_reminder_triggered = any(
+            kw in text_lower for kw in ["medication", "take your medicine", "next dose"]
+        )
+        escalation_triggered = any(
+            kw in text_lower for kw in ["go to the emergency", "er", "call your doctor", "call 911"]
+        )
+
+        # 4) Optional MLflow logging
+        if self.mlflow_enabled:
+            with mlflow.start_run(run_name="peds_session"):
+                # Params (categorical / text)
+                mlflow.log_param("user_text", user_msg)
+                mlflow.log_param("model_id", self.model_id)
+
+                # Metrics (numbers)
+                mlflow.log_metric("elapsed_ms", elapsed_ms)
+                mlflow.log_metric("medication_reminder_flag",
+                                  1.0 if medication_reminder_triggered else 0.0)
+                mlflow.log_metric("escalation_flag",
+                                  1.0 if escalation_triggered else 0.0)
+
+                print("[MLflow] Logged run: elapsed_ms =", elapsed_ms)
+
+        # 5) Return response in watsonx.ai format
         return {
             "headers": {
                 "Content-Type": "application/json"
