@@ -6,7 +6,16 @@ from langgraph.checkpoint.memory import MemorySaver
 import mlflow
 from datetime import datetime
 
-from .tools import pediatric_system_prompt, SymptomInput, evaluate_risk
+from .tools import (
+    pediatric_system_prompt,
+    SymptomInput,
+    evaluate_risk,
+    set_medication_reminder,
+    list_medication_reminders,
+    cancel_medication_reminder,
+    search_knowledge_base
+)
+from langchain_core.tools import tool
 
 
  #Try to import create_agent; if unavailable, fall back to create_react_agent
@@ -81,6 +90,36 @@ class PediatricAgentService:
                 lc_messages.append(AIMessage(content=content))
         return lc_messages
 
+    def _get_tools(self):
+        """Create LangChain tools for the agent."""
+        # Wrap medication reminder functions as LangChain tools
+        @tool
+        def medication_reminder_tool(medication_instruction: str) -> str:
+            """Set up a medication reminder alarm. Use when a guardian mentions a medication schedule like 'Take Zyrtec every 12 hours' or 'Ibuprofen every 6 hours for 3 days'."""
+            return set_medication_reminder(medication_instruction)
+
+        @tool
+        def list_reminders_tool() -> str:
+            """List all active medication reminders."""
+            return list_medication_reminders()
+
+        @tool
+        def cancel_reminder_tool(medication_name: str) -> str:
+            """Cancel a specific medication reminder by medication name."""
+            return cancel_medication_reminder(medication_name)
+
+        @tool
+        def knowledge_base_tool(query: str) -> str:
+            """Search the pediatric aftercare knowledge base for information about conditions, symptoms, care tips, medications, and red flags. Use this when guardians ask about specific conditions or symptoms."""
+            return search_knowledge_base(query)
+
+        return [
+            medication_reminder_tool,
+            list_reminders_tool,
+            cancel_reminder_tool,
+            knowledge_base_tool
+        ]
+
     def _build_agent_graph(self, messages_json):
         system_text = pediatric_system_prompt()
 
@@ -89,11 +128,14 @@ class PediatricAgentService:
             if m.get("role") == "system":
                 system_text += "\n\nAdditional instructions:\n" + m.get("content", "")
 
+        # Get medication reminder tools
+        tools = self._get_tools()
+
         if USE_CREATE_AGENT:
             # Newer style: create_agent from langchain.agents
             agent = create_agent(
                 model=self._llm,
-                tools=[],                          # add tools list here later
+                tools=tools,
                 system_prompt=system_text,
                 checkpointer=self._memory,
                 name="peds_post_discharge_agent",
@@ -111,7 +153,7 @@ class PediatricAgentService:
             )
             agent = create_react_agent(
                 self._llm,
-                tools=[],
+                tools=tools,
                 prompt=prompt,
                 checkpointer=self._memory,
                 name="peds_post_discharge_agent",

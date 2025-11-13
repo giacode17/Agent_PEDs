@@ -1,5 +1,5 @@
 # tests/test_tools.py
-from src.tools import SymptomInput, evaluate_risk
+from peds_post_discharge_agent.tools import SymptomInput, evaluate_risk
 
 def test_high_fever_triggers_alert():
     symptoms = SymptomInput(fever_c=39.2)

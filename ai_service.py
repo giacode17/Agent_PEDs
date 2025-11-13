@@ -1,5 +1,8 @@
 # ai_service.py
-#from src.agent import PediatricAgentService
+"""
+Watsonx.ai Service wrapper for the Pediatric Post-Discharge Agent.
+This module provides the interface for deploying the agent as a Watsonx service.
+"""
 import os
 from dotenv import load_dotenv
 from peds_post_discharge_agent.agent import PediatricAgentService
@@ -26,21 +29,23 @@ def gen_ai_service(context, params=None, **custom):
 
 def deployable_ai_service(context, **online_params):
     """
-    This is what the watsonx-ai CLI template expects when running locally:
-    it calls deployable_ai_service(context, **online_params) and expects
-    back a SINGLE callable (non-streaming or streaming).
+    Watsonx.ai CLI entry point for local deployment.
 
-    For now, we keep it simple and always return the NON-streaming version.
-    That means in config.toml, stream must be set to false.
+    Returns a single callable (non-streaming) for the agent.
+    Note: config.toml must have stream=false for this to work.
+
+    Args:
+        context: RuntimeContext from watsonx.ai
+        **online_params: Additional parameters from deployment config
+
+    Returns:
+        Callable: The generate function for processing requests
     """
-    #generate, _ = gen_ai_service(context, params=online_params)
     params = {
-    "space_id":SPACE_ID,
-    "mlflow_enabled": True,
-    "mlflow_tracking_uri": "file:./mlruns",
-    "mlflow_experiment_name": "peds_post_discharge_agent",
+        "space_id": SPACE_ID,
+        "mlflow_enabled": True,
+        "mlflow_tracking_uri": "file:./mlruns",
+        "mlflow_experiment_name": "peds_post_discharge_agent",
     }
     generate, _ = gen_ai_service(context, params=params)
-
-    
     return generate

@@ -1,8 +1,63 @@
+# Environment and credentials
 .env
+.env.local
+.env.*.local
+
+# IDEs
 .vscode
-__pycache__
-.pytest_cache
+.idea
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# Virtual environments
 .venv
-dist
+venv/
+ENV/
+env/
+
+# Project specific
 config.toml
 inference_engine_cache/
+chroma_db/
+mlruns/
+*.log
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
