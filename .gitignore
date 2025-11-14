@@ -47,6 +47,7 @@ ENV/
 env/
 
 # Project specific
+
 config.toml
 pyproject.toml
 inference_engine_cache/
