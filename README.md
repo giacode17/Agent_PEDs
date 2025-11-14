@@ -5,23 +5,13 @@ AI-powered assistant for parents and guardians to support children's recovery af
 ## 🎯 Features
 
 ### Core Capabilities
-- **Safety-First Design**: Non-diagnostic, guardian-focused guidance
+
 - **Risk Assessment**: Evaluates symptoms and provides escalation recommendations
 - **Medication Reminders**: Automated alarm system for prescription schedules
 - **RAG Knowledge Base**: Retrieves information from curated pediatric aftercare data
 - **MLflow Integration**: Tracks conversation metrics and model performance
 
-### Supported Conditions
-- Post-tonsillectomy care
-- RSV/Bronchiolitis recovery
-- Ear infections (Otitis Media)
-- Seasonal flu
-- Pneumonia aftercare
-- Gastroenteritis
-- Asthma exacerbations
-- Fracture cast care
-- Wound care (stitches/glue)
-- Appendectomy recovery
+
 
 ##  Architecture
 
@@ -48,7 +38,7 @@ AI-powered assistant for parents and guardians to support children's recovery af
 └──────────────┘   └──────────────────┘   └────────────────┘
 ```
 
-## 📦 Installation
+## Installation
 
 ### Prerequisites
 - Python 3.11
@@ -235,27 +225,8 @@ Run with coverage:
 poetry run pytest tests/ --cov=src/peds_post_discharge_agent --cov-report=html
 ```
 
-## 🤝 Contributing
 
-### Development Setup
-
-1. Install development dependencies:
-```bash
-poetry install --with dev
-```
-
-2. Run linting:
-```bash
-poetry run black src/ tests/
-poetry run pylint src/
-```
-
-3. Run tests before committing:
-```bash
-poetry run pytest tests/ -v
-```
-
-## 🌐 Optional Integrations
+## Improvement
 
 This project includes optional integrations in the `extras/` folder:
 
