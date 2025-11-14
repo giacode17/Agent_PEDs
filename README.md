@@ -59,7 +59,7 @@ AI-powered assistant for parents and guardians to support children's recovery af
 
 1. **Install dependencies**
 ```bash
-poetry install
+pip install -r requirements.txt
 ```
 
 2. **Configure environment**
