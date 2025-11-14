@@ -1,50 +1,100 @@
+#!/usr/bin/env python3
+"""
+Local runner for the Pediatric Post-Discharge Agent with MLflow tracking.
+
+This script allows you to chat with the agent locally and automatically
+tracks all conversations in MLflow.
+
+Usage:
+    poetry run python run_local.py
+"""
 import os
 from dotenv import load_dotenv
-from ibm_watsonx_ai import APIClient, Credentials
-from ibm_watsonx_ai.deployments import RuntimeContext
+from peds_post_discharge_agent.agent import PediatricAgentService
 
-from ai_service import gen_ai_service  # uses your PediatricAgentService inside
-
-# ---- 1. IBM Cloud auth ----
+# Load environment variables
 load_dotenv()
-API_KEY = os.getenv("IBM_CLOUD_API_KEY") or os.getenv("WATSONX_APIKEY")
-SPACE_ID = os.getenv("SPACE_ID") or os.getenv("WATSONX_SPACE_ID")
 
-if not API_KEY:
-    raise RuntimeError("Please set IBM_CLOUD_API_KEY in your environment.")
-if not SPACE_ID:
-    raise RuntimeError("Please set SPACE_ID in your environment.")
+def main():
+    print("=" * 70)
+    print("  Pediatric Post-Discharge Agent - Local Mode")
+    print("=" * 70)
+    print()
+    print("MLflow tracking enabled: Conversations will be logged to ./mlruns")
+    print("View metrics with: mlflow ui --backend-store-uri file:./mlruns")
+    print()
+    print("Type 'quit' or 'exit' to stop")
+    print("=" * 70)
+    print()
 
-credentials = Credentials(
-    url="https://us-south.ml.cloud.ibm.com",
-    api_key=API_KEY,
-)
-client = APIClient(credentials)
-client.set.default_space(SPACE_ID)
+    # Create a mock context (for local use, not deployed)
+    class MockContext:
+        pass
 
-# ---- 2. Build fake chat payload ----
+    context = MockContext()
 
-messages = [
-    {
-        "role": "user",
-        "content": "My child has a fever of 37.8C and is vomiting twice. Is this okay?",
+    # Configure with MLflow enabled
+    params = {
+        "space_id": os.getenv("SPACE_ID"),
+        "mlflow_enabled": True,  # Enable MLflow tracking
+        "mlflow_tracking_uri": "file:./mlruns",
+        "mlflow_experiment_name": "peds_post_discharge_agent",
     }
-]
 
-# ---- 3. Create RuntimeContext and local function ----
+    # Create the agent service
+    agent = PediatricAgentService(context, params=params)
 
-# First context: used to construct the service (provides token)
-service_context = RuntimeContext(api_client=client)
+    print("Agent ready! Try asking:")
+    print('  - "My child has a fever of 38.5°C and mild pain"')
+    print('  - "Remind me to give Zyrtec every 12 hours"')
+    print('  - "What foods are okay after tonsillectomy?"')
+    print()
 
-# gen_ai_service returns (generate, generate_stream)
-streaming = False
-index = 1 if streaming else 0
-local_function = gen_ai_service(service_context, params={"space_id": SPACE_ID})[index]
+    # Interactive conversation loop
+    while True:
+        try:
+            # Get user input
+            user_input = input("You: ").strip()
 
-# Second context: simulates the runtime request with payload
-request_context = RuntimeContext(api_client=client, request_payload_json={"messages": messages})
+            if not user_input:
+                continue
 
-# ---- 4. Call the local function ----
+            if user_input.lower() in ['quit', 'exit', 'bye']:
+                print("\nGoodbye! Check your MLflow logs for conversation metrics.")
+                break
 
-response = local_function(request_context)
-print(response)
+            # Create request context
+            request_ctx = {
+                "input": {
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": user_input
+                        }
+                    ]
+                }
+            }
+
+            # Get response from agent
+            print("\nAgent: ", end="", flush=True)
+            response = agent.generate(request_ctx)
+
+            # Extract and display the response
+            if "choices" in response and len(response["choices"]) > 0:
+                message = response["choices"][0]["message"]
+                content = message.get("content", "")
+                print(content)
+            else:
+                print("(No response generated)")
+
+            print()  # Add blank line for readability
+
+        except KeyboardInterrupt:
+            print("\n\nInterrupted! Goodbye.")
+            break
+        except Exception as e:
+            print(f"\nError: {e}")
+            print("Try another question or type 'quit' to exit.\n")
+
+if __name__ == "__main__":
+    main()

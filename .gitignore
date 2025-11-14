@@ -48,9 +48,11 @@ env/
 
 # Project specific
 config.toml
+pyproject.toml
 inference_engine_cache/
 chroma_db/
 mlruns/
+extras/
 *.log
 
 # OS
@@ -61,3 +63,6 @@ mlruns/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+#data
+peds-dataset/

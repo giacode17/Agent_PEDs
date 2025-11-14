@@ -1,77 +1,44 @@
 {
-    "oneOf": [
-      {
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "type": "object",
-        "description": "AI Service response for /ai_service_stream",
-        "properties": {
-          "choices": {
-            "description": "A list of chat completion choices.",
-            "type": "array",
-            "items": {
+  "application/json": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "description": "AI Service response with chat completion choices",
+    "properties": {
+      "choices": {
+        "description": "A list of chat completion choices.",
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "index": {
+              "type": "integer",
+              "description": "The index of this result."
+            },
+            "message": {
+              "description": "A message result.",
               "type": "object",
               "properties": {
-                "index": {
-                  "type": "integer",
-                  "title": "The index of this result."
+                "role": {
+                  "description": "The role of the author of this message.",
+                  "type": "string"
                 },
-                "delta": {
-                  "description": "A message result.",
-                  "type": "object",
-                  "properties": {
-                    "content": {
-                      "description": "The contents of the message.",
-                      "type": "string"
-                    },
-                    "role": {
-                      "description": "The role of the author of this message.",
-                      "type": "string"
-                    }
-                  },
-                  "required": ["role"]
+                "content": {
+                  "title": "Message content.",
+                  "type": "string"
                 }
-              }
+              },
+              "required": ["role", "content"]
             }
-          }
-        },
-        "required": ["choices"]
+          },
+          "required": ["index", "message"]
+        }
       },
-      {
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "type": "object",
-        "description": "AI Service response for /ai_service",
-        "properties": {
-          "choices": {
-            "description": "A list of chat completion choices.",
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "index": {
-                  "type": "integer",
-                  "description": "The index of this result."
-                },
-                "message": {
-                  "description": "A message result.",
-                  "type": "object",
-                  "properties": {
-                    "role": {
-                      "description": "The role of the author of this message.",
-                      "type": "string"
-                    },
-                    "content": {
-                      "title": "Message content.",
-                      "type": "string"
-                    }
-                  },
-                  "required": ["role"]
-                }
-              }
-            }
-          }
-        },
-        "required": ["choices"]
+      "model_id": {
+        "type": "string",
+        "description": "The model ID used for generation"
       }
-    ]
+    },
+    "required": ["choices"]
   }
+}
   

@@ -23,7 +23,7 @@ AI-powered assistant for parents and guardians to support children's recovery af
 - Wound care (stitches/glue)
 - Appendectomy recovery
 
-## 🏗️ Architecture
+##  Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -33,12 +33,12 @@ AI-powered assistant for parents and guardians to support children's recovery af
                        │
 ┌──────────────────────┴──────────────────────────────────────┐
 │                   LangGraph Agent                           │
-│  ┌────────────────────────────────────────────────────┐    │
-│  │  Tools:                                             │    │
-│  │  • Risk Assessment (fever, pain, symptoms)         │    │
-│  │  • Medication Reminder Management                  │    │
-│  │  • RAG Knowledge Base Search                       │    │
-│  └────────────────────────────────────────────────────┘    │
+│  ┌────────────────────────────────────────────────────┐     │
+│  │  Tools:                                            │     │
+│  │  • Risk Assessment (fever, pain, symptoms)         │     │
+│  │  • Medication Reminder Management                  │     │
+│  │  • RAG Knowledge Base Search                       │     │
+│  └────────────────────────────────────────────────────┘     │
 └─────────────────────────────────────────────────────────────┘
          │                    │                    │
          ▼                    ▼                    ▼
@@ -57,70 +57,58 @@ AI-powered assistant for parents and guardians to support children's recovery af
 
 ### Setup
 
-1. **Clone the repository**
-```bash
-git clone <repository-url>
-cd peds-post-discharge-agent
-```
-
-2. **Install dependencies**
+1. **Install dependencies**
 ```bash
 poetry install
 ```
 
-3. **Configure environment**
+2. **Configure environment**
 Create a `.env` file:
 ```bash
 IBM_CLOUD_API_KEY=your_api_key_here
 SPACE_ID=your_space_id_here
 ```
 
-4. **Configure deployment**
-Copy and edit `config.toml.example`:
-```bash
-cp config.toml.example config.toml
-# Edit config.toml with your Space ID
-```
 
 ## 🚀 Usage
 
-### Local Development
+### Run the Agent Locally
 
-Run the agent locally:
+Start an interactive conversation with the agent:
+
 ```bash
-poetry run python run_local.py
+watsonx-ai template invoke "<PROMPT>"
+```
+
+### Example Conversation
+
+```
+You: My child has a fever of 38.5°C and mild pain after surgery
+Agent: I'll help assess those symptoms...
+      [Performs risk assessment]
+      ✓ Symptoms Appear Normal
+      These symptoms are typically expected during recovery.
+      Continue monitoring and follow discharge instructions.
+
+You: Remind me to give Zyrtec every 12 hours
+Agent: [Sets up medication reminder]
+      ✓ Reminder set for Zyrtec every 12.0 hours.
+
+You: What foods are okay after tonsillectomy?
+Agent: [Searches knowledge base]
+      Based on our medical guidance:
+      • Soft foods like yogurt, pudding, ice cream
+      • Cold foods help soothe throat pain
+      • Avoid acidic or spicy foods...
 ```
 
 ### Testing
 
-Run the full test suite:
+Run the full test suite (21 tests):
 ```bash
 poetry run pytest tests/ -v
 ```
 
-Run specific test categories:
-```bash
-# Test medication reminders
-poetry run pytest tests/test_medication_reminders.py -v
-
-# Test RAG system
-poetry run pytest tests/test_rag.py -v
-
-# Test risk assessment
-poetry run pytest tests/test_tools.py -v
-```
-
-### Interactive Testing
-
-Test medication reminders:
-```bash
-poetry run python test_medication_reminders.py
-```
-
-Test RAG knowledge retrieval:
-```bash
-poetry run python test_rag_system.py
-```
 
 ## 🔧 Key Components
 
@@ -161,7 +149,7 @@ result = search_knowledge_base("RSV cough normal symptoms")
 **Data Sources:**
 - `pediatric_aftercare.jsonl` - 10 common post-discharge conditions
 - `medication_guides.jsonl` - Pediatric medication safety info
-- Embedded using ChromaDB with all-MiniLM-L6-v2 model
+- Embedded using ChromaDB with default embeddings
 
 ### 3. Risk Assessment
 
@@ -181,9 +169,14 @@ risk = evaluate_risk(symptoms)
 # Returns: RiskAssessment(
 #   risk_level="high_risk",
 #   alert_flag=1,
-#   reasons=["High fever (>= 39.0 °C)"]
+#   reasons=["High fever (>= 39.0 °C)", "Severe pain (>= 7)"]
 # )
 ```
+
+**Risk Levels:**
+- `normal` - Expected recovery symptoms
+- `watch` - Monitor closely, contact doctor if worsens
+- `high_risk` - Seek immediate medical care
 
 ## 📊 Project Structure
 
@@ -194,37 +187,25 @@ peds-post-discharge-agent/
 │   ├── tools.py                    # Agent tools & risk assessment
 │   ├── medication_reminders.py     # Medication scheduler
 │   └── rag_retrieval.py           # RAG system with ChromaDB
-├── peds-dataset/
-│   └── pediatric_agent_dataset/   # Curated medical knowledge
+├── data/                           # Knowledge base data
+│   └── pediatric_agent_dataset/
+│       ├── pediatric_aftercare.jsonl
+│       └── medication_guides.jsonl
 ├── tests/                          # Comprehensive test suite
 │   ├── test_tools.py              # Risk assessment tests
 │   ├── test_medication_reminders.py
 │   └── test_rag.py                # RAG retrieval tests
+├── extras/                         # Optional integrations
+│   ├── watsonx-assistant-integration/  # Chatbot UI (optional)
+│   └── watsonx-ai-deployment/     # Cloud deployment (optional)
 ├── ai_service.py                  # Watsonx.ai service wrapper
 ├── run_local.py                   # Local development script
-└── run_remote.py                  # Remote deployment script
+├── run_remote.py                  # Remote API script
+├── test_medication_reminders.py   # Interactive reminder test
+└── test_rag_system.py            # Interactive RAG test
 ```
 
-## 🔒 Safety & Compliance
 
-**This agent is designed for:**
-- General after-care guidance
-- Symptom education (normal vs. concerning)
-- Medication reminder support
-- Emergency escalation recommendations
-
-**This agent does NOT:**
-- Diagnose conditions
-- Prescribe medications
-- Calculate medication doses
-- Replace medical professional advice
-
-**Red Flag Detection:**
-- High fever (≥ 39.0°C)
-- Breathing difficulty
-- Severe pain
-- Dehydration signs
-- Other emergency symptoms
 
 ## 📈 MLflow Tracking
 
@@ -234,15 +215,6 @@ The agent logs conversation metrics to MLflow:
 - Medication reminder flags
 - Escalation triggers
 - Model parameters
-
-Enable MLflow in `ai_service.py`:
-```python
-params = {
-    "mlflow_enabled": True,
-    "mlflow_tracking_uri": "file:./mlruns",
-    "mlflow_experiment_name": "peds_post_discharge_agent",
-}
-```
 
 View metrics:
 ```bash
@@ -261,21 +233,6 @@ Test categories:
 Run with coverage:
 ```bash
 poetry run pytest tests/ --cov=src/peds_post_discharge_agent --cov-report=html
-```
-
-## 🚢 Deployment
-
-### Watsonx.ai Deployment
-
-1. Ensure `config.toml` is configured
-2. Deploy using Watsonx CLI:
-```bash
-watsonx-ai deploy --config config.toml
-```
-
-3. Test the deployment:
-```bash
-poetry run python run_remote.py
 ```
 
 ## 🤝 Contributing
@@ -298,9 +255,20 @@ poetry run pylint src/
 poetry run pytest tests/ -v
 ```
 
-## 📝 License
+## 🌐 Optional Integrations
 
-[Add your license here]
+This project includes optional integrations in the `extras/` folder:
+
+### Watsonx Assistant Integration
+Add a conversational UI with visual dialog design, web chat, and multi-channel support.
+
+See: `extras/watsonx-assistant-integration/WATSONX_ASSISTANT_SETUP.md`
+
+### Watsonx.ai Cloud Deployment
+Deploy the agent to IBM Cloud for scalable production hosting.
+
+See: `extras/watsonx-ai-deployment/DEPLOYMENT.md`
+
 
 ## 🙏 Acknowledgments
 
@@ -309,10 +277,4 @@ poetry run pytest tests/ -v
 - ChromaDB for vector storage
 - Curated pediatric medical content (synthetic, educational)
 
-## ⚠️ Disclaimer
 
-This is a demonstration project with synthetic educational content. It is **not** intended for actual medical use. Always consult qualified healthcare providers for medical advice, diagnosis, or treatment.
-
----
-
-**Built with ❤️ for pediatric care**
