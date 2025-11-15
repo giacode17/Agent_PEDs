@@ -39,6 +39,7 @@ MANIFEST
 htmlcov/
 .tox/
 .hypothesis/
+priv_test/
 
 # Virtual environments
 .venv
@@ -52,6 +53,7 @@ config.toml
 pyproject.toml
 inference_engine_cache/
 chroma_db/
+test_chroma_db/
 mlruns/
 extras/
 *.log

@@ -17,17 +17,13 @@ from .tools import (
 )
 from langchain_core.tools import tool
 
+ #To import create_agent
+from langchain.agents import create_agent
+USE_CREATE_AGENT = True
+print("model success")
 
- #Try to import create_agent; if unavailable, fall back to create_react_agent
-try:
-    from langchain.agents import create_agent
-    USE_CREATE_AGENT = True
-    print("model success")
-except ImportError:
-    from langgraph.prebuilt import create_react_agent
-    USE_CREATE_AGENT = False
-
-
+import logging
+logger = logging.getLogger(__name__)
 
 
 class PediatricAgentService:
@@ -71,13 +67,14 @@ class PediatricAgentService:
             "temperature": 0.2,
             "top_p": 1,
         }
-        return ChatWatsonx(
+        llm = ChatWatsonx(
             model_id=self.model_id,
             url=self.service_url,
             space_id=self.space_id,
             params=params,
             watsonx_client=self.api_client,
         )
+        return llm
 
     def _convert_messages(self, messages_json):
         lc_messages = []
@@ -131,34 +128,15 @@ class PediatricAgentService:
         # Get medication reminder tools
         tools = self._get_tools()
 
-        if USE_CREATE_AGENT:
-            # Newer style: create_agent from langchain.agents
-            agent = create_agent(
-                model=self._llm,
-                tools=tools,
-                system_prompt=system_text,
-                checkpointer=self._memory,
-                name="peds_post_discharge_agent",
-            )
-        else:
-            # Fallback to LangGraph prebuilt create_react_agent
-            from langchain_core.prompts import ChatPromptTemplate
-            from langgraph.prebuilt import create_react_agent
-
-            prompt = ChatPromptTemplate.from_messages(
-                [
-                    ("system", system_text),
-                    ("human", "{input}")
-                ]
-            )
-            agent = create_react_agent(
-                self._llm,
-                tools=tools,
-                prompt=prompt,
-                checkpointer=self._memory,
-                name="peds_post_discharge_agent",
-            )
-
+        # Newer style: create_agent from langchain.agents
+        agent = create_agent(
+            model=self._llm,
+            tools=tools,
+            system_prompt=system_text,
+            checkpointer=self._memory,
+            name="peds_post_discharge_agent",
+        )
+    
         return agent
 
     # -------- Non-streaming --------
@@ -176,11 +154,35 @@ class PediatricAgentService:
 
         result_state = agent.invoke(
             state_input,
-            {"configurable": {"thread_id": "peds-42"}}
+            {
+                "configurable": {"thread_id": "peds-42"},
+                "recursion_limit": 25  # Allow multiple tool call iterations
+            }
         )
 
-        last_msg = result_state["messages"][-1]
+        # Debug: Log message types
+        logger.info(f"Total messages in result: {len(result_state['messages'])}")
+        for i, msg in enumerate(result_state['messages']):
+            msg_type = type(msg).__name__
+            logger.info(f"Message {i}: {msg_type}")
+
+        # Get the final assistant message (skip tool call messages)
+        last_msg = None
+        for msg in reversed(result_state["messages"]):
+            # Look for AIMessage that's not a tool call
+            if hasattr(msg, 'type') and msg.type == 'ai':
+                if not hasattr(msg, 'tool_calls') or not msg.tool_calls:
+                    last_msg = msg
+                    break
+            elif hasattr(msg, 'content') and isinstance(msg.content, str) and msg.content:
+                last_msg = msg
+                break
+
+        if not last_msg:
+            last_msg = result_state["messages"][-1]
+
         generated_text = last_msg.content
+        logger.info(f"Final generated text: {generated_text[:100] if generated_text else 'None'}...")
 
         elapsed_ms = int((time.time() - start) * 1000)
 
@@ -191,14 +193,42 @@ class PediatricAgentService:
                 user_msg = m.get("content", "")
                 break
 
-        # 3) Very simple flags for demo (you can refine later)
+        # 3) Detect medication reminders and high-risk escalations
         text_lower = (generated_text or "").lower()
-        medication_reminder_triggered = any(
-            kw in text_lower for kw in ["medication", "take your medicine", "next dose"]
+
+        # Medication reminder: Check if medication_reminder_tool was actually called
+        medication_reminder_triggered = False
+        for msg in result_state["messages"]:
+            # Check for AI messages with tool calls
+            if hasattr(msg, 'tool_calls') and msg.tool_calls:
+                for tool_call in msg.tool_calls:
+                    if 'name' in tool_call and 'medication_reminder_tool' in str(tool_call.get('name', '')):
+                        medication_reminder_triggered = True
+                        logger.info("Detected medication_reminder_tool call")
+                        break
+            # Also check tool messages (responses from tools)
+            if hasattr(msg, 'name') and msg.name == 'medication_reminder_tool':
+                medication_reminder_triggered = True
+                logger.info("Detected medication_reminder_tool execution")
+
+        # Fallback: Also check response text for confirmation phrases
+        if not medication_reminder_triggered:
+            medication_reminder_triggered = any(
+                kw in text_lower for kw in ["reminder set", "remind you", "alarm set", "medication schedule",
+                                           "✓ reminder", "i have set", "i've set a reminder", "setting a reminder"]
+            )
+            if medication_reminder_triggered:
+                logger.info("Detected medication reminder via text matching")
+
+        # Escalation: only flag true emergencies (high-risk cases)
+        # Check for emergency keywords AND exclude general advice
+        has_emergency_keywords = any(
+            kw in text_lower for kw in ["call 911", "go to the emergency", "seek immediate", "emergency room"]
         )
-        escalation_triggered = any(
-            kw in text_lower for kw in ["go to the emergency", "er", "call your doctor", "call 911"]
-        )
+        has_general_advice = "if symptoms worsen" in text_lower or "contact your doctor if" in text_lower
+
+        # Only flag as escalation if it's urgent language, not general advice
+        escalation_triggered = has_emergency_keywords and not has_general_advice
 
         # 4) Optional MLflow logging
         if self.mlflow_enabled:
@@ -266,6 +296,5 @@ class PediatricAgentService:
                     }
 
             elif chunk_type == "updates":
-                # Tool / final updates – you can add rich streaming here later.
-                # For now, just skip or handle final content similar to above.
+                
                 continue

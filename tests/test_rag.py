@@ -10,9 +10,9 @@ class TestRAGSystem:
     @pytest.fixture(scope="class")
     def rag_system(self):
         """Create a RAG system instance for testing."""
-        # Use the actual peds-dataset directory
+        # Use the actual pediatric_agent_dataset directory
         project_root = Path(__file__).parent.parent
-        data_dir = project_root / "peds-dataset" / "pediatric_agent_dataset"
+        data_dir = project_root / "pediatric_agent_dataset"
 
         rag = PediatricRAG(data_dir=str(data_dir), persist_directory="./test_chroma_db")
         rag.initialize()

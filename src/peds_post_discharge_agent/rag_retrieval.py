@@ -44,9 +44,9 @@ class PediatricRAG:
             persist_directory: Where to store the vector database
         """
         if data_dir is None:
-            # Default to peds-dataset folder
+            # Default to pediatric_agent_dataset folder at project root
             project_root = Path(__file__).parent.parent.parent
-            data_dir = project_root / "peds-dataset" / "pediatric_agent_dataset"
+            data_dir = project_root / "pediatric_agent_dataset"
 
         self.data_dir = Path(data_dir)
         self.persist_directory = persist_directory
