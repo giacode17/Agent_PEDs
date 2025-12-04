@@ -3,7 +3,7 @@
 AI-powered assistant for parents and guardians to support children's recovery after hospital discharge. Built with IBM Watsonx.ai, LangGraph, and RAG (Retrieval Augmented Generation).
 
 ## Video Demo
-You can see this demo on my linked in([Go](https://www.linkedin.com/feed/update/urn:li:activity:7402266482606579712/))
+You can see this demo on my linkedIn([ Go ](https://www.linkedin.com/feed/update/urn:li:activity:7402266482606579712/))
 
 ## 🎯 Features
 
