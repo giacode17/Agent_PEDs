@@ -95,14 +95,6 @@ Agent: [Searches knowledge base]
       • Avoid acidic or spicy foods...
 ```
 
-### Testing
-
-Run the full test suite (21 tests):
-```bash
-poetry run pytest tests/ -v
-```
-
-
 ## 🔧 Key Components
 
 ### 1. Medication Reminder System
@@ -180,17 +172,17 @@ peds-post-discharge-agent/
 │   ├── tools.py                    # Agent tools & risk assessment
 │   ├── medication_reminders.py     # Medication scheduler
 │   └── rag_retrieval.py           # RAG system with ChromaDB
+|
 ├── data/                           # Knowledge base data
 │   └── pediatric_agent_dataset/
 │       ├── pediatric_aftercare.jsonl
 │       └── medication_guides.jsonl
+|
 ├── tests/                          # Comprehensive test suite
-│   ├── test_tools.py              # Risk assessment tests
+│   ├── test_tools.py              
 │   ├── test_medication_reminders.py
-│   └── test_rag.py                # RAG retrieval tests
-├── extras/                         # Optional integrations
-│   ├── watsonx-assistant-integration/  # Chatbot UI (optional)
-│   └── watsonx-ai-deployment/     # Cloud deployment (optional)
+│   └── test_rag.py                
+|
 └──  ai_service.py                  # Watsonx.ai service wrapper
 
 ```
