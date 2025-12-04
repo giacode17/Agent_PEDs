@@ -2,6 +2,9 @@
 
 AI-powered assistant for parents and guardians to support children's recovery after hospital discharge. Built with IBM Watsonx.ai, LangGraph, and RAG (Retrieval Augmented Generation).
 
+## Video Demo
+You can see this demo on my linked in [Go]([URL](https://www.linkedin.com/feed/update/urn:li:activity:7402266482606579712/)
+
 ## 🎯 Features
 
 ### Core Capabilities
@@ -188,11 +191,8 @@ peds-post-discharge-agent/
 ├── extras/                         # Optional integrations
 │   ├── watsonx-assistant-integration/  # Chatbot UI (optional)
 │   └── watsonx-ai-deployment/     # Cloud deployment (optional)
-├── ai_service.py                  # Watsonx.ai service wrapper
-├── run_local.py                   # Local development script
-├── run_remote.py                  # Remote API script
-├── test_medication_reminders.py   # Interactive reminder test
-└── test_rag_system.py            # Interactive RAG test
+└──  ai_service.py                  # Watsonx.ai service wrapper
+
 ```
 
 
@@ -226,26 +226,5 @@ poetry run pytest tests/ --cov=src/peds_post_discharge_agent --cov-report=html
 ```
 
 
-## Improvement
-
-This project includes optional integrations in the `extras/` folder:
-
-### Watsonx Assistant Integration
-Add a conversational UI with visual dialog design, web chat, and multi-channel support.
-
-See: `extras/watsonx-assistant-integration/WATSONX_ASSISTANT_SETUP.md`
-
-### Watsonx.ai Cloud Deployment
-Deploy the agent to IBM Cloud for scalable production hosting.
-
-See: `extras/watsonx-ai-deployment/DEPLOYMENT.md`
-
-
-## 🙏 Acknowledgments
-
-- IBM Watsonx.ai team for the Granite LLM
-- LangChain/LangGraph for agent framework
-- ChromaDB for vector storage
-- Curated pediatric medical content (synthetic, educational)
 
 
